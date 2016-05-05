@@ -12,7 +12,7 @@ import (
 
 const (
 	path = "/metrics"
-	addr = "localhost:9180"
+	addr = ":9180"
 )
 
 var once sync.Once
