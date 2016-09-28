@@ -8,6 +8,7 @@ import (
 	"github.com/mholt/caddy"
 	"github.com/mholt/caddy/caddyhttp/httpserver"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func init() {
@@ -41,7 +42,7 @@ func (m *Metrics) start() error {
 		prometheus.MustRegister(responseSize)
 		prometheus.MustRegister(responseStatus)
 
-		http.Handle(path, prometheus.Handler())
+		http.Handle(path, promhttp.Handler())
 		go func() {
 			fmt.Errorf("%s", http.ListenAndServe(m.addr, nil))
 		}()
