@@ -1,7 +1,7 @@
 package metrics
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 	"sync"
 
@@ -46,7 +46,7 @@ func (m *Metrics) start() error {
 		go func() {
 			err := http.ListenAndServe(m.addr, nil)
 			if err != nil {
-				fmt.Printf("Error starting handler: %s", err)
+				log.Printf("[ERROR] Starting handler: %v", err)
 			}
 		}()
 	})
