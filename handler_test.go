@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"errors"
 	"net/http"
 	"sync"
 	"testing"
@@ -14,6 +15,7 @@ func TestMetrics_ServeHTTP(t *testing.T) {
 	successRequest, err := http.NewRequest("GET", "http://test.com/success", nil)
 	errorRequest, err := http.NewRequest("GET", "http://test.com/error", nil)
 	proxyRequest, err := http.NewRequest("GET", "http://test.com/proxy", nil)
+	proxyErrorRequest, err := http.NewRequest("GET", "http://test.com/proxyerror", nil)
 
 	if err != nil {
 		t.Fatal(err)
@@ -53,7 +55,7 @@ func TestMetrics_ServeHTTP(t *testing.T) {
 			name: "500 handler response",
 			fields: fields{
 				next: testHandler{},
-				addr: "success",
+				addr: "error",
 				once: sync.Once{},
 			},
 			args: args{
@@ -67,16 +69,29 @@ func TestMetrics_ServeHTTP(t *testing.T) {
 			name: "proxy handler response",
 			fields: fields{
 				next: testHandler{},
-				addr: "success",
+				addr: "proxy",
 				once: sync.Once{},
 			},
 			args: args{
 				w: httptest.NewRecorder(),
 				r: proxyRequest,
 			},
-			// httpserver.ResponseRecord defaults to a status code of 200
-			want:    200,
+			want:    0,
 			wantErr: false,
+		},
+		{
+			name: "proxy error handler response",
+			fields: fields{
+				next: testHandler{},
+				addr: "proxyerror",
+				once: sync.Once{},
+			},
+			args: args{
+				w: httptest.NewRecorder(),
+				r: proxyErrorRequest,
+			},
+			want:    502,
+			wantErr: true,
 		},
 	}
 
@@ -106,14 +121,20 @@ func TestMetrics_ServeHTTP(t *testing.T) {
 type testHandler struct{}
 
 func (h testHandler) ServeHTTP(_ http.ResponseWriter, r *http.Request) (int, error) {
-	var status int
+	var (
+		status int
+		err    error
+	)
 
 	switch r.URL.Path {
 	case "/success":
 		status = 200
 	case "/error":
 		status = 500
+	case "/proxyerror":
+		status = 502
+		err = errors.New("no hosts available upstream")
 	}
 
-	return status, nil
+	return status, err
 }
