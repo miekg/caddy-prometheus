@@ -15,7 +15,7 @@ For each virtual host that you want to see metrics for.
 There are currently two optional parameters that can be used:
 
   - **address** - the address where the metrics are exposed, the default is `localhost:9180`
-  - **hostname** - the hostname that the metrics are generated for, this defaults to your specified hostname
+  - **hostname** - the `host` parameter that can be found in the exported metrics, this defaults to the label specified for the server block
 
 The metrics path is fixed to `/metrics`.
 
