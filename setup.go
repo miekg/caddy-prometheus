@@ -29,6 +29,7 @@ var once sync.Once
 type Metrics struct {
 	next httpserver.Handler
 	addr string // where to we listen
+	hostname string
 	// subsystem?
 	once sync.Once
 }
@@ -104,6 +105,12 @@ func parse(c *caddy.Controller) (*Metrics, error) {
 					return nil, c.ArgErr()
 				}
 				metrics.addr = args[0]
+			case "hostname":
+				args = c.RemainingArgs()
+				if len(args) != 1 {
+					return nil, c.ArgErr()
+				}
+				metrics.hostname = args[0]
 			default:
 				return nil, c.Errf("prometheus: unknown item: %s", c.Val())
 			}

@@ -12,9 +12,16 @@ import (
 
 func (m *Metrics) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
 	next := m.next
-	host, err := host(r)
-	if err != nil {
-		host = "-"
+
+	hostname := m.hostname
+
+	if hostname == "" {
+		originalHostname, err := host(r)
+		if err != nil {
+			hostname = "-"
+		} else {
+			hostname = originalHostname
+		}
 	}
 	start := time.Now()
 
@@ -42,10 +49,10 @@ func (m *Metrics) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error)
 	proto := strconv.Itoa(r.ProtoMajor)
 	proto = proto + "." + strconv.Itoa(r.ProtoMinor)
 
-	requestCount.WithLabelValues(host, fam, proto).Inc()
-	requestDuration.WithLabelValues(host, fam, proto).Observe(float64(time.Since(start)) / float64(time.Second))
-	responseSize.WithLabelValues(host).Observe(float64(rw.Size()))
-	responseStatus.WithLabelValues(host, strconv.Itoa(stat)).Inc()
+	requestCount.WithLabelValues(hostname, fam, proto).Inc()
+	requestDuration.WithLabelValues(hostname, fam, proto).Observe(float64(time.Since(start)) / float64(time.Second))
+	responseSize.WithLabelValues(hostname).Observe(float64(rw.Size()))
+	responseStatus.WithLabelValues(hostname, strconv.Itoa(stat)).Inc()
 
 	return status, err
 }
