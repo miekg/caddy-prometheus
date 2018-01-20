@@ -12,8 +12,9 @@ prometheus
 
 For each virtual host that you want to see metrics for.
 
-There are currently two optional parameters that can be used:
+These are the (optional) parameters that can be used:
 
+  - **use_caddy_addr** - causes metrics to be exposed at the same address:port as Caddy itself. This can not be specified at the same time as **address**.
   - **address** - the address where the metrics are exposed, the default is `localhost:9180`
   - **hostname** - the `host` parameter that can be found in the exported metrics, this defaults to the label specified for the server block
 

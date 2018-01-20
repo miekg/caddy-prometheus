@@ -6,6 +6,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"net/http/httptest"
 
 	"github.com/mholt/caddy/caddyhttp/httpserver"
@@ -91,9 +93,10 @@ func TestMetrics_ServeHTTP(t *testing.T) {
 	}
 
 	m := &Metrics{
-		next: tests[0].fields.next,
-		addr: tests[0].fields.addr,
-		once: sync.Once{},
+		next:    tests[0].fields.next,
+		addr:    tests[0].fields.addr,
+		once:    sync.Once{},
+		handler: promhttp.Handler(),
 	}
 	m.start()
 
