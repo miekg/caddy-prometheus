@@ -20,22 +20,31 @@ func init() {
 }
 
 const (
-	path = "/metrics"
-	addr = "localhost:9180"
+	defaultPath = "/metrics"
+	defaultAddr = "localhost:9180"
 )
 
 var once sync.Once
 
-// Metrics holds the prometheus configuration. The metrics' path is fixed to be /metrics
+// Metrics holds the prometheus configuration.
 type Metrics struct {
 	next         httpserver.Handler
 	addr         string // where to we listen
 	useCaddyAddr bool
 	hostname     string
+	path         string
 	// subsystem?
 	once sync.Once
 
 	handler http.Handler
+}
+
+// NewMetrics -
+func NewMetrics() *Metrics {
+	return &Metrics{
+		path: defaultPath,
+		addr: defaultAddr,
+	}
 }
 
 func (m *Metrics) start() error {
@@ -48,7 +57,7 @@ func (m *Metrics) start() error {
 		prometheus.MustRegister(responseStatus)
 
 		if !m.useCaddyAddr {
-			http.Handle(path, m.handler)
+			http.Handle(m.path, m.handler)
 			go func() {
 				err := http.ListenAndServe(m.addr, nil)
 				if err != nil {
@@ -65,9 +74,6 @@ func setup(c *caddy.Controller) error {
 	if err != nil {
 		return err
 	}
-	if metrics.addr == "" {
-		metrics.addr = addr
-	}
 
 	metrics.handler = promhttp.HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{
 		ErrorHandling: promhttp.HTTPErrorOnError,
@@ -82,7 +88,7 @@ func setup(c *caddy.Controller) error {
 	if metrics.useCaddyAddr {
 		cfg.AddMiddleware(func(next httpserver.Handler) httpserver.Handler {
 			return httpserver.HandlerFunc(func(w http.ResponseWriter, r *http.Request) (int, error) {
-				if r.URL.Path == path {
+				if r.URL.Path == metrics.path {
 					metrics.handler.ServeHTTP(w, r)
 					return 0, nil
 				}
@@ -111,7 +117,7 @@ func parse(c *caddy.Controller) (*Metrics, error) {
 		if metrics != nil {
 			return nil, c.Err("prometheus: can only have one metrics module per server")
 		}
-		metrics = &Metrics{}
+		metrics = NewMetrics()
 		args := c.RemainingArgs()
 
 		switch len(args) {
@@ -121,8 +127,15 @@ func parse(c *caddy.Controller) (*Metrics, error) {
 		default:
 			return nil, c.ArgErr()
 		}
+		addrSet := false
 		for c.NextBlock() {
 			switch c.Val() {
+			case "path":
+				args = c.RemainingArgs()
+				if len(args) != 1 {
+					return nil, c.ArgErr()
+				}
+				metrics.path = args[0]
 			case "address":
 				if metrics.useCaddyAddr {
 					return nil, c.Err("prometheus: address and use_caddy_addr options may not be used together")
@@ -132,6 +145,7 @@ func parse(c *caddy.Controller) (*Metrics, error) {
 					return nil, c.ArgErr()
 				}
 				metrics.addr = args[0]
+				addrSet = true
 			case "hostname":
 				args = c.RemainingArgs()
 				if len(args) != 1 {
@@ -139,7 +153,7 @@ func parse(c *caddy.Controller) (*Metrics, error) {
 				}
 				metrics.hostname = args[0]
 			case "use_caddy_addr":
-				if metrics.addr != "" {
+				if addrSet {
 					return nil, c.Err("prometheus: address and use_caddy_addr options may not be used together")
 				}
 				metrics.useCaddyAddr = true

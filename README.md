@@ -16,9 +16,8 @@ These are the (optional) parameters that can be used:
 
   - **use_caddy_addr** - causes metrics to be exposed at the same address:port as Caddy itself. This can not be specified at the same time as **address**.
   - **address** - the address where the metrics are exposed, the default is `localhost:9180`
+  - **path** - the path to serve collected metrics from, the default is `/metrics`
   - **hostname** - the `host` parameter that can be found in the exported metrics, this defaults to the label specified for the server block
-
-The metrics path is fixed to `/metrics`.
 
 With `caddyext` you'll need to put this module early in the chain, so that
 the duration histogram actually makes sense. I've put it at number 0.

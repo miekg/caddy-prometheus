@@ -97,6 +97,7 @@ func TestMetrics_ServeHTTP(t *testing.T) {
 		addr:    tests[0].fields.addr,
 		once:    sync.Once{},
 		handler: promhttp.Handler(),
+		path:    "/metrics",
 	}
 	m.start()
 
