@@ -47,6 +47,19 @@ func TestParse(t *testing.T) {
 			use_caddy_addr
 			hostname example.com
 		}`, false, &Metrics{useCaddyAddr: true, hostname: "example.com", addr: defaultAddr, path: defaultPath}},
+		{`prometheus {
+			basicauth samber qwerty
+			basicauth caddy issupercool
+		}`, false, &Metrics{addr: defaultAddr, path: defaultPath, basicAuth: []BasicAuth{{username: "samber", password: "qwerty"}, {username: "caddy", password: "issupercool"}}}},
+		{`prometheus {
+			basicauth samber
+		}`, true, nil},
+		{`prometheus {
+			basicauth
+		}`, true, nil},
+		{`prometheus {
+			basicauth /metrics samber qwerty
+		}`, true, nil},
 	}
 	for i, test := range tests {
 		c := caddy.NewTestController("http", test.input)
