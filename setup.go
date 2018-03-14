@@ -51,7 +51,6 @@ func NewMetrics() *Metrics {
 	return &Metrics{
 		path:      defaultPath,
 		addr:      defaultAddr,
-		basicAuth: []BasicAuth{},
 	}
 }
 
@@ -94,7 +93,7 @@ func (m *Metrics) authMiddleware() http.Handler {
 
 	// auth middleware starts here
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if len(m.basicAuth) > 0 {
+		if m.basicAuth != nil && len(m.basicAuth) > 0 {
 
 			// parse 'Authorization' header
 			username, password, ok := r.BasicAuth()

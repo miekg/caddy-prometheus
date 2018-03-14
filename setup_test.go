@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"testing"
+	"reflect"
 
 	"github.com/mholt/caddy"
 )
@@ -69,7 +70,7 @@ func TestParse(t *testing.T) {
 		} else if !test.shouldErr && err != nil {
 			t.Errorf("Test %v: Expected no error but found error: %v", i, err)
 		}
-		if test.expected != m && *test.expected != *m {
+		if reflect.DeepEqual(m, test.expected) == false {
 			t.Errorf("Test %v: Created Metrics (\n%#v\n) does not match expected (\n%#v\n)", i, m, test.expected)
 		}
 	}
