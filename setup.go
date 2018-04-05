@@ -53,6 +53,7 @@ func (m *Metrics) start() error {
 
 		prometheus.MustRegister(requestCount)
 		prometheus.MustRegister(requestDuration)
+		prometheus.MustRegister(responseLatency)
 		prometheus.MustRegister(responseSize)
 		prometheus.MustRegister(responseStatus)
 

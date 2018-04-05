@@ -9,6 +9,7 @@ var (
 	requestDuration *prometheus.HistogramVec
 	responseSize    *prometheus.HistogramVec
 	responseStatus  *prometheus.CounterVec
+	responseLatency *prometheus.HistogramVec
 )
 
 func define(subsystem string) {
@@ -44,4 +45,12 @@ func define(subsystem string) {
 		Name:      "response_status_count_total",
 		Help:      "Counter of response status codes.",
 	}, []string{"host", "status"})
+
+	responseLatency = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: namespace,
+		Subsystem: subsystem,
+		Name:      "response_latency_seconds",
+		Help:      "Histogram of the time (in seconds) until the first write for each request.",
+		Buckets:   append(prometheus.DefBuckets, 15, 20, 30, 60, 120, 180, 240, 480, 960),
+	}, []string{"host"})
 }

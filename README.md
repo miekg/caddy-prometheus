@@ -28,6 +28,7 @@ The following metrics are exported:
 
 * caddy_http_request_count_total{host, family, proto}
 * caddy_http_request_duration_seconds{host, family, proto}
+* caddy_http_response_latency_seconds{host}
 * caddy_http_response_size_bytes{host}
 * caddy_http_response_status_count_total{host, status}
 
