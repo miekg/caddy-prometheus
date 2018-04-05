@@ -42,8 +42,7 @@ func (m *Metrics) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error)
 	}
 
 	fam := "1"
-	ip := net.ParseIP(r.RemoteAddr)
-	if ip != nil && ip.To4() == nil {
+	if isIPv6(r.RemoteAddr) {
 		fam = "2"
 	}
 	proto := strconv.Itoa(r.ProtoMajor)
@@ -66,4 +65,13 @@ func host(r *http.Request) (string, error) {
 		return "", err
 	}
 	return strings.ToLower(host), nil
+}
+
+func isIPv6(addr string) bool {
+	if host, _, err := net.SplitHostPort(addr); err == nil {
+		// Strip away the port.
+		addr = host
+	}
+	ip := net.ParseIP(addr)
+	return ip != nil && ip.To4() == nil
 }

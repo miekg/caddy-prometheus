@@ -115,6 +115,28 @@ func TestMetrics_ServeHTTP(t *testing.T) {
 	}
 }
 
+func TestIsIPv6(t *testing.T) {
+	cases := []struct {
+		addr   string
+		isIPv6 bool
+	}{
+		{"", false},
+		{"192.0.2.42", false},
+		{"192.0.2.42:5678", false},
+		{"2001:db8::42", true},
+		{"[2001:db8::42]:5678", true},
+		{"banana", false},
+		{"banana::phone", false},
+	}
+
+	for _, tc := range cases {
+		res := isIPv6(tc.addr)
+		if res != tc.isIPv6 {
+			t.Errorf("isIPv6(%q) => %v, want %v", tc.addr, res, tc.isIPv6)
+		}
+	}
+}
+
 type testHandler struct{}
 
 func (h testHandler) ServeHTTP(_ http.ResponseWriter, r *http.Request) (int, error) {
