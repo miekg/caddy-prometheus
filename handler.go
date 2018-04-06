@@ -52,14 +52,17 @@ func (m *Metrics) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error)
 	if isIPv6(r.RemoteAddr) {
 		fam = "2"
 	}
+
 	proto := strconv.Itoa(r.ProtoMajor)
 	proto = proto + "." + strconv.Itoa(r.ProtoMinor)
 
+	statusStr := strconv.Itoa(stat)
+
 	requestCount.WithLabelValues(hostname, fam, proto).Inc()
 	requestDuration.WithLabelValues(hostname, fam, proto).Observe(time.Since(start).Seconds())
-	responseSize.WithLabelValues(hostname).Observe(float64(rw.Size()))
-	responseStatus.WithLabelValues(hostname, strconv.Itoa(stat)).Inc()
-	responseLatency.WithLabelValues(hostname).Observe(tw.firstWrite.Sub(start).Seconds())
+	responseSize.WithLabelValues(hostname, fam, proto, statusStr).Observe(float64(rw.Size()))
+	responseStatus.WithLabelValues(hostname, fam, proto, statusStr).Inc()
+	responseLatency.WithLabelValues(hostname, fam, proto, statusStr).Observe(tw.firstWrite.Sub(start).Seconds())
 
 	return status, err
 }

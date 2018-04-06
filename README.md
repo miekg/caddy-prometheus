@@ -28,14 +28,14 @@ The following metrics are exported:
 
 * caddy_http_request_count_total{host, family, proto}
 * caddy_http_request_duration_seconds{host, family, proto}
-* caddy_http_response_latency_seconds{host}
-* caddy_http_response_size_bytes{host}
-* caddy_http_response_status_count_total{host, status}
+* caddy_http_response_latency_seconds{host, family, proto, status}
+* caddy_http_response_size_bytes{host, family, proto, status}
+* caddy_http_response_status_count_total{host, family, proto, status}
 
-Each counter has a label `host` which is the hostname used for the request/response.
+Each metric has the following labels:
 
-The `status_count` metrics has an extra label `status` which holds the status code.
+* `host` which is the hostname used for the request/response,
+* `family` which is the protocol family, either 1 (IP version 4) or 2 (IP version 6),
+* `proto` which is the HTTP protocol major and minor version used: 1.x or 2 signifying HTTP/1.x or HTTP/2.
 
-The `request_count_total` and `request_duration_seconds` also has the protocol family in the
-`family` label, this is either 1 (IP version 4) or 2 (IP version 6) and the HTTP protocol major and
-minor version (in the `proto` label) used: 1.x or 2 signifying HTTP/1.x or HTTP/2.
+The `response_*` metrics have an extra label `status` which holds the status code.
