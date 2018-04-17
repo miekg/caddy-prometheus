@@ -18,9 +18,32 @@ These are the (optional) parameters that can be used:
   - **address** - the address where the metrics are exposed, the default is `localhost:9180`
   - **path** - the path to serve collected metrics from, the default is `/metrics`
   - **hostname** - the `host` parameter that can be found in the exported metrics, this defaults to the label specified for the server block
+  - **basicauth** - the `basicauth` adds a basic auth check before exposing metrics. It can be defined multiple times.
 
 With `caddyext` you'll need to put this module early in the chain, so that
 the duration histogram actually makes sense. I've put it at number 0.
+
+### Example
+
+```
+:80 {
+
+  ...
+
+  prometheus {
+    address 0.0.0.0:9180
+    path /a/b/c/metrics
+
+    hostname example.org
+
+    basicauth my_username1 my_password1
+    basicauth my_username2 my_password2
+  }
+
+  ...
+
+}
+```
 
 ## Metrics
 
