@@ -56,6 +56,9 @@ func (m *Metrics) start() error {
 		prometheus.MustRegister(responseLatency)
 		prometheus.MustRegister(responseSize)
 		prometheus.MustRegister(responseStatus)
+		prometheus.MustRegister(appVersion)
+
+		appVersion.Set(1)
 
 		if !m.useCaddyAddr {
 			http.Handle(m.path, m.handler)

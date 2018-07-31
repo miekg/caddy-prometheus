@@ -1,5 +1,6 @@
 package metrics
 
+import "github.com/mholt/caddy"
 import "github.com/prometheus/client_golang/prometheus"
 
 const namespace = "caddy"
@@ -10,6 +11,7 @@ var (
 	responseSize    *prometheus.HistogramVec
 	responseStatus  *prometheus.CounterVec
 	responseLatency *prometheus.HistogramVec
+	appVersion      prometheus.Gauge
 )
 
 func define(subsystem string) {
@@ -53,4 +55,13 @@ func define(subsystem string) {
 		Help:      "Histogram of the time (in seconds) until the first write for each request.",
 		Buckets:   append(prometheus.DefBuckets, 15, 20, 30, 60, 120, 180, 240, 480, 960),
 	}, []string{"host", "family", "proto", "status"})
+
+	appVersion = prometheus.NewGauge(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "version",
+		Help:      "Version as given by -version.",
+		ConstLabels: prometheus.Labels{
+			"version": caddy.AppVersion,
+		},
+	})
 }
