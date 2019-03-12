@@ -58,11 +58,18 @@ func (m *Metrics) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error)
 
 	statusStr := strconv.Itoa(stat)
 
-	requestCount.WithLabelValues(hostname, fam, proto).Inc()
-	requestDuration.WithLabelValues(hostname, fam, proto).Observe(time.Since(start).Seconds())
-	responseSize.WithLabelValues(hostname, fam, proto, statusStr).Observe(float64(rw.Size()))
-	responseStatus.WithLabelValues(hostname, fam, proto, statusStr).Inc()
-	responseLatency.WithLabelValues(hostname, fam, proto, statusStr).Observe(tw.firstWrite.Sub(start).Seconds())
+	replacer := httpserver.NewReplacer(r, rw, "")
+	var extraLabelValues []string
+
+	for _, value := range m.extraLabels {
+		extraLabelValues = append(extraLabelValues, replacer.Replace(value))
+	}
+
+	requestCount.WithLabelValues(append([]string{hostname, fam, proto}, extraLabelValues...)...).Inc()
+	requestDuration.WithLabelValues(append([]string{hostname, fam, proto}, extraLabelValues...)...).Observe(time.Since(start).Seconds())
+	responseSize.WithLabelValues(append([]string{hostname, fam, proto, statusStr}, extraLabelValues...)...).Observe(float64(rw.Size()))
+	responseStatus.WithLabelValues(append([]string{hostname, fam, proto, statusStr}, extraLabelValues...)...).Inc()
+	responseLatency.WithLabelValues(append([]string{hostname, fam, proto, statusStr}, extraLabelValues...)...).Observe(tw.firstWrite.Sub(start).Seconds())
 
 	return status, err
 }

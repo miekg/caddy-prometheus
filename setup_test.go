@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/mholt/caddy"
@@ -12,8 +13,8 @@ func TestParse(t *testing.T) {
 		shouldErr bool
 		expected  *Metrics
 	}{
-		{`prometheus`, false, &Metrics{addr: defaultAddr, path: defaultPath}},
-		{`prometheus foo:123`, false, &Metrics{addr: "foo:123", path: defaultPath}},
+		{`prometheus`, false, &Metrics{addr: defaultAddr, path: defaultPath, extraLabels: map[string]string{}}},
+		{`prometheus foo:123`, false, &Metrics{addr: "foo:123", path: defaultPath, extraLabels: map[string]string{}}},
 		{`prometheus foo bar`, true, nil},
 		{`prometheus {
 			a b
@@ -39,14 +40,18 @@ func TestParse(t *testing.T) {
 		}`, true, nil},
 		{`prometheus {
 			use_caddy_addr
-		}`, false, &Metrics{useCaddyAddr: true, addr: defaultAddr, path: defaultPath}},
+		}`, false, &Metrics{useCaddyAddr: true, addr: defaultAddr, path: defaultPath, extraLabels: map[string]string{}}},
 		{`prometheus {
 			path /foo
-		}`, false, &Metrics{addr: defaultAddr, path: "/foo"}},
+		}`, false, &Metrics{addr: defaultAddr, path: "/foo", extraLabels: map[string]string{}}},
 		{`prometheus {
 			use_caddy_addr
 			hostname example.com
-		}`, false, &Metrics{useCaddyAddr: true, hostname: "example.com", addr: defaultAddr, path: defaultPath}},
+		}`, false, &Metrics{useCaddyAddr: true, hostname: "example.com", addr: defaultAddr, path: defaultPath, extraLabels: map[string]string{}}},
+		{`prometheus {
+			label version 1.2
+			label route_name {<X-Route-Name}
+		}`, false, &Metrics{addr: defaultAddr, path: defaultPath, extraLabels: map[string]string{"route_name": "{<X-Route-Name}", "version": "1.2"}}},
 	}
 	for i, test := range tests {
 		c := caddy.NewTestController("http", test.input)
@@ -56,7 +61,7 @@ func TestParse(t *testing.T) {
 		} else if !test.shouldErr && err != nil {
 			t.Errorf("Test %v: Expected no error but found error: %v", i, err)
 		}
-		if test.expected != m && *test.expected != *m {
+		if !reflect.DeepEqual(test.expected, m) && !reflect.DeepEqual(*test.expected, *m) {
 			t.Errorf("Test %v: Created Metrics (\n%#v\n) does not match expected (\n%#v\n)", i, m, test.expected)
 		}
 	}

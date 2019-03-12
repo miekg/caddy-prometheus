@@ -18,6 +18,11 @@ These are the (optional) parameters that can be used:
   - **address** - the address where the metrics are exposed, the default is `localhost:9180`
   - **path** - the path to serve collected metrics from, the default is `/metrics`
   - **hostname** - the `host` parameter that can be found in the exported metrics, this defaults to the label specified for the server block
+  - **label** - Custom label to add on all metrics.
+    This directive can be used multiple times.  
+    You should specify a label name and a value.  
+    The value is a [placeholder](https://caddyserver.com/docs/placeholders) and can be used to extract value from response header for instance.  
+    Usage: `label route_name {<X-Route-Name}`
 
 With `caddyext` you'll need to put this module early in the chain, so that
 the duration histogram actually makes sense. I've put it at number 0.

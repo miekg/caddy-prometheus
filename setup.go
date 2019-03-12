@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/mholt/caddy"
@@ -33,6 +34,7 @@ type Metrics struct {
 	useCaddyAddr bool
 	hostname     string
 	path         string
+	extraLabels  map[string]string
 	// subsystem?
 	once sync.Once
 
@@ -42,14 +44,15 @@ type Metrics struct {
 // NewMetrics -
 func NewMetrics() *Metrics {
 	return &Metrics{
-		path: defaultPath,
-		addr: defaultAddr,
+		path:        defaultPath,
+		addr:        defaultAddr,
+		extraLabels: map[string]string{},
 	}
 }
 
 func (m *Metrics) start() error {
 	m.once.Do(func() {
-		define("")
+		m.define("")
 
 		prometheus.MustRegister(requestCount)
 		prometheus.MustRegister(requestDuration)
@@ -68,6 +71,16 @@ func (m *Metrics) start() error {
 		}
 	})
 	return nil
+}
+
+func (m *Metrics) extraLabelNames() []string {
+	names := make([]string, 0, len(m.extraLabels))
+
+	for name := range m.extraLabels {
+		names = append(names, name)
+	}
+
+	return names
 }
 
 func setup(c *caddy.Controller) error {
@@ -158,6 +171,16 @@ func parse(c *caddy.Controller) (*Metrics, error) {
 					return nil, c.Err("prometheus: address and use_caddy_addr options may not be used together")
 				}
 				metrics.useCaddyAddr = true
+			case "label":
+				args = c.RemainingArgs()
+				if len(args) != 2 {
+					return nil, c.ArgErr()
+				}
+
+				labelName := strings.TrimSpace(args[0])
+				labelValuePlaceholder := args[1]
+
+				metrics.extraLabels[labelName] = labelValuePlaceholder
 			default:
 				return nil, c.Errf("prometheus: unknown item: %s", c.Val())
 			}
