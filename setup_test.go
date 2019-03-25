@@ -13,8 +13,8 @@ func TestParse(t *testing.T) {
 		shouldErr bool
 		expected  *Metrics
 	}{
-		{`prometheus`, false, &Metrics{addr: defaultAddr, path: defaultPath, extraLabels: map[string]string{}}},
-		{`prometheus foo:123`, false, &Metrics{addr: "foo:123", path: defaultPath, extraLabels: map[string]string{}}},
+		{`prometheus`, false, &Metrics{addr: defaultAddr, path: defaultPath, extraLabels: []extraLabel{}}},
+		{`prometheus foo:123`, false, &Metrics{addr: "foo:123", path: defaultPath, extraLabels: []extraLabel{}}},
 		{`prometheus foo bar`, true, nil},
 		{`prometheus {
 			a b
@@ -40,18 +40,18 @@ func TestParse(t *testing.T) {
 		}`, true, nil},
 		{`prometheus {
 			use_caddy_addr
-		}`, false, &Metrics{useCaddyAddr: true, addr: defaultAddr, path: defaultPath, extraLabels: map[string]string{}}},
+		}`, false, &Metrics{useCaddyAddr: true, addr: defaultAddr, path: defaultPath, extraLabels: []extraLabel{}}},
 		{`prometheus {
 			path /foo
-		}`, false, &Metrics{addr: defaultAddr, path: "/foo", extraLabels: map[string]string{}}},
+		}`, false, &Metrics{addr: defaultAddr, path: "/foo", extraLabels: []extraLabel{}}},
 		{`prometheus {
 			use_caddy_addr
 			hostname example.com
-		}`, false, &Metrics{useCaddyAddr: true, hostname: "example.com", addr: defaultAddr, path: defaultPath, extraLabels: map[string]string{}}},
+		}`, false, &Metrics{useCaddyAddr: true, hostname: "example.com", addr: defaultAddr, path: defaultPath, extraLabels: []extraLabel{}}},
 		{`prometheus {
 			label version 1.2
 			label route_name {<X-Route-Name}
-		}`, false, &Metrics{addr: defaultAddr, path: defaultPath, extraLabels: map[string]string{"route_name": "{<X-Route-Name}", "version": "1.2"}}},
+		}`, false, &Metrics{addr: defaultAddr, path: defaultPath, extraLabels: []extraLabel{extraLabel{"version", "1.2"}, extraLabel{"route_name", "{<X-Route-Name}"}}}},
 	}
 	for i, test := range tests {
 		c := caddy.NewTestController("http", test.input)

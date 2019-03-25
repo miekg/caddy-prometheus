@@ -61,8 +61,8 @@ func (m *Metrics) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error)
 	replacer := httpserver.NewReplacer(r, rw, "")
 	var extraLabelValues []string
 
-	for _, value := range m.extraLabels {
-		extraLabelValues = append(extraLabelValues, replacer.Replace(value))
+	for _, label := range m.extraLabels {
+		extraLabelValues = append(extraLabelValues, replacer.Replace(label.value))
 	}
 
 	requestCount.WithLabelValues(append([]string{hostname, fam, proto}, extraLabelValues...)...).Inc()

@@ -34,11 +34,16 @@ type Metrics struct {
 	useCaddyAddr bool
 	hostname     string
 	path         string
-	extraLabels  map[string]string
+	extraLabels  []extraLabel
 	// subsystem?
 	once sync.Once
 
 	handler http.Handler
+}
+
+type extraLabel struct {
+	name  string
+	value string
 }
 
 // NewMetrics -
@@ -46,7 +51,7 @@ func NewMetrics() *Metrics {
 	return &Metrics{
 		path:        defaultPath,
 		addr:        defaultAddr,
-		extraLabels: map[string]string{},
+		extraLabels: []extraLabel{},
 	}
 }
 
@@ -76,8 +81,8 @@ func (m *Metrics) start() error {
 func (m *Metrics) extraLabelNames() []string {
 	names := make([]string, 0, len(m.extraLabels))
 
-	for name := range m.extraLabels {
-		names = append(names, name)
+	for _, label := range m.extraLabels {
+		names = append(names, label.name)
 	}
 
 	return names
@@ -180,7 +185,7 @@ func parse(c *caddy.Controller) (*Metrics, error) {
 				labelName := strings.TrimSpace(args[0])
 				labelValuePlaceholder := args[1]
 
-				metrics.extraLabels[labelName] = labelValuePlaceholder
+				metrics.extraLabels = append(metrics.extraLabels, extraLabel{name: labelName, value: labelValuePlaceholder})
 			default:
 				return nil, c.Errf("prometheus: unknown item: %s", c.Val())
 			}
