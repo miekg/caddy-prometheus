@@ -10,7 +10,7 @@ import (
 
 	"net/http/httptest"
 
-	"github.com/mholt/caddy/caddyhttp/httpserver"
+	"github.com/caddyserver/caddy/caddyhttp/httpserver"
 )
 
 func TestMetrics_ServeHTTP(t *testing.T) {
