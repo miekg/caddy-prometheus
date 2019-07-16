@@ -118,3 +118,12 @@ func (w *timedResponseWriter) WriteHeader(statuscode int) {
 	w.didWrite()
 	w.ResponseWriter.WriteHeader(statuscode)
 }
+
+func (w *timedResponseWriter) Flush() {
+	flushableResponseWriter, ok := w.ResponseWriter.(http.Flusher)
+	if !ok {
+		return
+	}
+
+	flushableResponseWriter.Flush()
+}
