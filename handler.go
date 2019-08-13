@@ -28,7 +28,7 @@ func (m *Metrics) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error)
 	// Record response to get status code and size of the reply.
 	rw := httpserver.NewResponseRecorder(w)
 	// Get time to first write.
-	tw := &timedResponseWriter{ResponseWriter: rw}
+	tw := newTimedResponseWriter(rw)
 
 	status, err := next.ServeHTTP(tw, r)
 
@@ -69,7 +69,7 @@ func (m *Metrics) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error)
 	requestDuration.WithLabelValues(append([]string{hostname, fam, proto}, extraLabelValues...)...).Observe(time.Since(start).Seconds())
 	responseSize.WithLabelValues(append([]string{hostname, fam, proto, statusStr}, extraLabelValues...)...).Observe(float64(rw.Size()))
 	responseStatus.WithLabelValues(append([]string{hostname, fam, proto, statusStr}, extraLabelValues...)...).Inc()
-	responseLatency.WithLabelValues(append([]string{hostname, fam, proto, statusStr}, extraLabelValues...)...).Observe(tw.firstWrite.Sub(start).Seconds())
+	responseLatency.WithLabelValues(append([]string{hostname, fam, proto, statusStr}, extraLabelValues...)...).Observe(tw.firstWrite().Sub(start).Seconds())
 
 	return status, err
 }
@@ -94,17 +94,47 @@ func isIPv6(addr string) bool {
 	return ip != nil && ip.To4() == nil
 }
 
+// A responseWriterWithFirstWrite is an http.Responsewrite with the ability to
+// tracks the time when the first response write happened.
+type responseWriterWithFirstWrite interface {
+	http.ResponseWriter
+	didWrite()
+	firstWrite() time.Time
+}
+
 // A timedResponseWriter tracks the time when the first response write
 // happened.
 type timedResponseWriter struct {
-	firstWrite time.Time
+	firstWriteTime time.Time
 	http.ResponseWriter
 }
 
-func (w *timedResponseWriter) didWrite() {
-	if w.firstWrite.IsZero() {
-		w.firstWrite = time.Now()
+// A timedResponseWriterHijacker is a timedResponseWriter and http.Hijacker.
+type timedResponseWriterHijacker struct {
+	*timedResponseWriter
+	http.Hijacker
+}
+
+// NewLoggedResponseWriter wraps the provided http.ResponseWriter with Status
+// preserving the support to hijack the connection if supported by the provided
+// http.ResponseWriter.
+func newTimedResponseWriter(w http.ResponseWriter) responseWriterWithFirstWrite {
+	tw := &timedResponseWriter{ResponseWriter: w}
+	if hj, ok := w.(http.Hijacker); ok {
+		return &timedResponseWriterHijacker{timedResponseWriter: tw, Hijacker: hj}
 	}
+
+	return tw
+}
+
+func (w *timedResponseWriter) didWrite() {
+	if w.firstWriteTime.IsZero() {
+		w.firstWriteTime = time.Now()
+	}
+}
+
+func (w *timedResponseWriter) firstWrite() time.Time {
+	return w.firstWriteTime
 }
 
 func (w *timedResponseWriter) Write(data []byte) (int, error) {
